@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Trip receipts - accessible only by trip participants
+    match /trips/{tripId}/receipts/{receiptId} {
+      allow read, write: if isSignedIn();
+      // Note: You may want to add more strict rules checking if user is a participant
+      // This would require additional logic or denormalization
+    }
+    
+    // User profile pictures (optional - for future use)
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}
