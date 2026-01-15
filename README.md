@@ -82,8 +82,9 @@ lib/
 
 ## 📱 Screenshots
 
-
-| ![Trips](lib\docs\screenshorts\trip.jpg) | ![Expense](lib\docs\screenshorts\expenses.jpg) | ![Expense_detail](lib\docs\screenshorts\expense_detail.jpg) | ![Settlement](lib\docs\screenshorts\settlement.jpg) | ![Pdf_export](lib\docs\screenshorts\pdf_export.jpg) |
+| ![Trips](lib/docs/screenshorts/trip.jpg) | ![Expense](lib/docs/screenshorts/expenses.jpg) | ![Expense_detail](lib/docs/screenshorts/expense_detail.jpg) | ![Settlement](lib/docs/screenshorts/settlement.jpg) | ![Pdf_export](lib/docs/screenshorts/pdf_export.jpg) |
+|:---:|:---:|:---:|:---:|:---:|
+| Trips | Expenses | Expense Detail | Settlement | PDF Export |
 
 
 
@@ -91,7 +92,7 @@ lib/
 
 ```bash
 git clone https://github.com/SAM389/split-trip.git
-cd splittrip
+cd split-trip
 flutter pub get
 flutter run
 ```
