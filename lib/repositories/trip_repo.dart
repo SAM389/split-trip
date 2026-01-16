@@ -3,12 +3,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/trip.dart';
 
+/// Repository for managing trip data in Firestore.
+///
+/// Provides CRUD operations and real-time streams for trip data.
+/// Implements the repository pattern to abstract Firestore operations
+/// from the business logic layer.
 class TripRepository {
   final FirebaseFirestore _firestore;
 
   TripRepository(this._firestore);
 
-  /// Watch trips where user is a participant
+  /// Returns a real-time stream of trips where the user is a participant.
+  ///
+  /// Trips are ordered by creation date (most recent first).
+  /// The stream automatically updates when trips are added, modified, or removed.
+  ///
+  /// [userId] The ID of the user whose trips to watch
   Stream<List<Trip>> watchTrips(String userId) {
     return _firestore
         .collection('trips')
@@ -22,14 +32,25 @@ class TripRepository {
     });
   }
 
-  /// Get a single trip
+  /// Fetches a single trip by ID.
+  ///
+  /// Returns `null` if the trip doesn't exist.
+  ///
+  /// [tripId] The ID of the trip to fetch
   Future<Trip?> getTrip(String tripId) async {
     final doc = await _firestore.collection('trips').doc(tripId).get();
     if (!doc.exists) return null;
     return Trip.fromMap(doc.id, doc.data()!);
   }
 
-  /// Create a new trip
+  /// Creates a new trip with the specified owner and settings.
+  ///
+  /// The owner is automatically added to the participants list.
+  /// Returns the ID of the newly created trip.
+  ///
+  /// [ownerId] Firebase user ID of the trip creator
+  /// [name] Display name for the trip
+  /// [baseCurrency] Currency code for expense calculations (e.g., "INR")
   Future<String> createTrip({
     required String ownerId,
     required String name,
@@ -49,12 +70,21 @@ class TripRepository {
     return docRef.id;
   }
 
-  /// Update trip
+  /// Updates an existing trip with new data.
+  ///
+  /// All trip fields will be updated with the values from [trip].
+  ///
+  /// [trip] The trip object with updated values
   Future<void> updateTrip(Trip trip) async {
     await _firestore.collection('trips').doc(trip.id).update(trip.toMap());
   }
 
-  /// Delete trip (owner only)
+  /// Deletes a trip and all its associated data.
+  ///
+  /// Should only be called by the trip owner. Related expenses and participants
+  /// will also be deleted through Firestore cascade rules.
+  ///
+  /// [tripId] The ID of the trip to delete
   Future<void> deleteTrip(String tripId) async {
     await _firestore.collection('trips').doc(tripId).delete();
   }

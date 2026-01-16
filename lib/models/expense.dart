@@ -1,11 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Defines how an expense should be split among participants.
+///
+/// - [equal]: Split the expense equally among all participants
+/// - [percentage]: Split based on custom percentage for each participant
+/// - [exact]: Split with exact amounts specified for each participant
 enum SplitType { equal, percentage, exact }
 
+/// Represents an individual participant's share of an expense.
+///
+/// Stores both the normalized amount in the trip's base currency and optionally
+/// the original amount if it was in a different currency.
 class ExpenseShare {
+  /// ID of the participant who owes this share
   final String participantId;
-  final double amountInBase; // converted using rateToBase snapshot
+  
+  /// Amount owed in the trip's base currency
+  final double amountInBase;
+  
+  /// Original amount if expense was in a different currency
   final double? originalAmount;
+  
+  /// Original currency code if different from base (e.g., "USD")
   final String? originalCurrency;
 
   const ExpenseShare({
@@ -24,6 +40,7 @@ class ExpenseShare {
     };
   }
 
+  /// Creates an expense share from a Firestore document map.
   factory ExpenseShare.fromMap(Map<String, dynamic> map) {
     return ExpenseShare(
       participantId: map['participantId'] as String,
@@ -36,21 +53,64 @@ class ExpenseShare {
   }
 }
 
+/// Represents a single expense within a trip.
+///
+/// An expense records a payment made by one participant ([payerId]) that is
+/// split among multiple participants according to the [splitType] strategy.
+///
+/// The expense stores both the original amount in [expenseCurrency] and a
+/// snapshot of the exchange [rateToBase] at creation time. This ensures
+/// consistent settlement calculations even if exchange rates change later.
+///
+/// Each expense maintains a [shares] list that breaks down how much each
+/// participant owes, normalized to the trip's base currency.
 class Expense {
+  /// Unique identifier for the expense
   final String id;
+  
+  /// ID of the trip this expense belongs to
   final String tripId;
+  
+  /// ID of the participant who paid for this expense
   final String payerId;
+  
+  /// Description of the expense (e.g., "Dinner at restaurant")
   final String description;
-  final double amount; // original amount in expenseCurrency
+  
+  /// Original expense amount in [expenseCurrency]
+  final double amount;
+  
+  /// Currency code of the original expense (e.g., "USD", "EUR")
   final String expenseCurrency;
-  final double rateToBase; // snapshot at creation
+  
+  /// Exchange rate to base currency at time of creation (snapshot)
+  final double rateToBase;
+  
+  /// Date when the expense occurred
   final DateTime date;
+  
+  /// Converts the expense to a Firestore-compatible map.
+  ///
+  /// Excludes the [id] field as it's stored as the document ID in Firestore.
+  /// Strategy used to split this expense among participants
   final SplitType splitType;
-  final Map<String, double> splitMeta; // shares/percent/exact per user
-  final List<ExpenseShare> shares; // computed, in base currency
-  final String category; // Food/Stay/Transport/etc.
+  
+  /// Split distribution metadata (shares/percentages/exact amounts per participant)
+  final Map<String, double> splitMeta;
+  
+  /// Computed expense shares for each participant in base currency
+  final List<ExpenseShare> shares;
+  
+  /// Category of the expense (e.g., "Food", "Transport", "Stay")
+  final String category;
+  
+  /// URL to uploaded receipt image in Firebase Storage
   final String? receiptUrl;
-  final String? payerDisplayName; // snapshot of payer's name at creation
+  
+  /// Snapshot of payer's display name at creation time
+  final String? payerDisplayName;
+  
+  /// Snapshot map of participant names for shares at creation time
   final Map<String, String>?
   shareParticipantNames; // snapshot of participant names for shares
 
@@ -88,6 +148,10 @@ class Expense {
       'receiptUrl': receiptUrl,
       'payerDisplayName': payerDisplayName,
       'shareParticipantNames': shareParticipantNames,
+  /// Creates an expense instance from a Firestore document.
+  ///
+  /// [id] is the Firestore document ID.
+  /// [map] contains the document data.
     };
   }
 
@@ -122,8 +186,14 @@ class Expense {
     );
   }
 
+  /// Returns the total expense amount converted to the trip's base currency.
+  ///
+  /// Uses the snapshot [rateToBase] exchange rate from expense creation time.
   double get totalInBase => amount * rateToBase;
 
+  /// Creates a copy of this expense with the given fields replaced with new values.
+  ///
+  /// Used for immutable updates in state management.
   Expense copyWith({
     String? id,
     String? tripId,
