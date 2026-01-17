@@ -42,6 +42,25 @@ jobs:
           echo "  static const FirebaseOptions ios = FirebaseOptions(apiKey: 'test', appId: 'test', messagingSenderId: 'test', projectId: 'test', iosBundleId: 'test');" >> lib/firebase_options.dart
           echo "}" >> lib/firebase_options.dart
       
+      - name: Create dummy google-services.json for CI
+        run: |
+          echo '{' > android/app/google-services.json
+          echo '  "project_info": {' >> android/app/google-services.json
+          echo '    "project_number": "123456789",' >> android/app/google-services.json
+          echo '    "project_id": "test-project"' >> android/app/google-services.json
+          echo '  },' >> android/app/google-services.json
+          echo '  "client": [{' >> android/app/google-services.json
+          echo '    "client_info": {' >> android/app/google-services.json
+          echo '      "mobilesdk_app_id": "1:123456789:android:abcdef",' >> android/app/google-services.json
+          echo '      "android_client_info": { "package_name": "Splitwiser.com" }' >> android/app/google-services.json
+          echo '    },' >> android/app/google-services.json
+          echo '    "oauth_client": [],' >> android/app/google-services.json
+          echo '    "api_key": [{ "current_key": "test-key" }],' >> android/app/google-services.json
+          echo '    "services": { "appinvite_service": { "other_platform_oauth_client": [] } }' >> android/app/google-services.json
+          echo '  }],' >> android/app/google-services.json
+          echo '  "configuration_version": "1"' >> android/app/google-services.json
+          echo '}' >> android/app/google-services.json
+      
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
         continue-on-error: true
